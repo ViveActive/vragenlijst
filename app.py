@@ -1,20 +1,64 @@
+
 import streamlit as st
 import pandas as pd
 from PIL import Image
-import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="FitKompas", layout="centered")
+st.set_page_config(page_title="FitKompas", layout="wide")
 
-# Laad logo
+st.markdown("""
+<style>
+body {
+    background-color: #f8f9fa;
+    font-family: 'Roboto', sans-serif;
+    color: #343a40;
+}
+.header {
+    text-align: center;
+    padding: 2rem 0;
+}
+.header h1 {
+    font-size: 3rem;
+    color: #2e7d32;
+    margin-bottom: 0.5rem;
+}
+.header p {
+    font-size: 1.2rem;
+    color: #6c757d;
+}
+.question-container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 800px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.stButton>button {
+    background-color: #2e7d32;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 4px;
+}
+div[data-baseweb="radio"] > div > label {
+    border: 1px solid #2e7d32;
+    border-radius: 0;
+    padding: 10px 15px;
+    margin: 5px;
+    min-width: 150px;
+    text-align: center;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="header"><h1>FitKompas Vragenlijst</h1><p>Ontdek jouw fitheid en motivatie</p></div>', unsafe_allow_html=True)
+
 logo = Image.open("logo.png")
-st.image(logo, width=200)
+st.image(logo, width=150)
 
-st.title("FitKompas Vragenlijst")
-
-# Laad de vragenlijst
 @st.cache_data
 def load_data():
-    import numpy as np
     df = pd.read_excel("vragenlijst.xlsx")
     df = df.dropna(subset=["Unnamed: 1"])
     df = df.rename(columns={
@@ -22,89 +66,48 @@ def load_data():
         "x-as": "x_as",
         "y-as": "y_as",
         "Unnamed: 4": "richting",
-        "Unnamed: 6": "thema"
-    df = df[df['vraag'].notna() & (df['vraag'] != '')]
-    df = df.replace({np.nan: None})
+        "Unnamed: 6": "thema",
+        "# vraag": "# vraag"
     })
+    df = df[df['vraag'].notna() & (df['vraag'] != '')]
+    df.reset_index(drop=True, inplace=True)
     return df
 
 df = load_data()
+total_questions = len(df)
 
-antwoorden = []
-st.write("Beantwoord de onderstaande vragen:")
+if 'q_index' not in st.session_state:
+    st.session_state.q_index = 0
+if 'answers' not in st.session_state:
+    st.session_state.answers = []
 
-        f"{int(row['# vraag'])}. {row['vraag']} - Thema: {row['thema']}",
-    antwoord = st.radio(
-        f"{int(row['# vraag'])}. {row['vraag']}  -  Thema: {row['thema']}",
-**Thema:** {row['thema']}",
-        options=[5, 4, 3, 2, 1],
-        format_func=lambda x: {
-            5: "Helemaal mee eens",
-            4: "Mee eens",
-            3: "Neutraal",
-            2: "Mee oneens",
-            1: "Helemaal niet mee eens"
-        }[x],
-        key=f"vraag_{i}"
-    )
-    antwoorden.append(antwoord)
-
-if st.button("Verstuur"):
-    df["antwoord"] = antwoorden
-
-    # Score op x- en y-as berekenen
-    x_score = df[df["x_as"].notna()]["antwoord"].sum()
-    y_score = df[df["y_as"].notna()]["antwoord"].sum()
-
-    # Normaliseren
-    max_x = len(df[df["x_as"].notna()]) * 5
-    max_y = len(df[df["y_as"].notna()]) * 5
-    x_norm = round((x_score / max_x) * 100)
-    y_norm = round((y_score / max_y) * 100)
-
-    st.subheader("📊 Jouw resultaat")
-    st.markdown(f"**Actief-score (x-as):** {x_norm}/100")
-    st.markdown(f"**Motivatie-score (y-as):** {y_norm}/100")
-
-    # Bepaal kwadrant
-    if x_norm < 50 and y_norm < 50:
-        kwadrant = "Niet actief & niet gemotiveerd"
-        kleur = "🔴"
-    elif x_norm < 50 and y_norm >= 50:
-        kwadrant = "Niet actief & wél gemotiveerd"
-        kleur = "🟡"
-    elif x_norm >= 50 and y_norm < 50:
-        kwadrant = "Wél actief & niet gemotiveerd"
-        kleur = "🟠"
-    else:
-        kwadrant = "Wél actief & wél gemotiveerd"
-        kleur = "🟢"
-
-    st.markdown(f"**Je valt in het kwadrant:** {kleur} **{kwadrant}**")
-
-    # Visualisatie
-    fig, ax = plt.subplots()
-    ax.set_xlim(0, 100)
-    ax.set_ylim(0, 100)
-
-    # Kleuren achtergrond per kwadrant
-    ax.axhspan(50, 100, xmin=0.5, xmax=1.0, facecolor='#c8facc')  # Q1
-    ax.axhspan(50, 100, xmin=0.0, xmax=0.5, facecolor='#fff9c4')  # Q2
-    ax.axhspan(0, 50, xmin=0.0, xmax=0.5, facecolor='#ffcdd2')    # Q3
-    ax.axhspan(0, 50, xmin=0.5, xmax=1.0, facecolor='#ffe0b2')    # Q4
-
-    ax.axvline(50, color='black', linestyle='--')
-    ax.axhline(50, color='black', linestyle='--')
-
-    ax.plot(x_norm, y_norm, 'ko')  # Stip
-    ax.text(x_norm+2, y_norm+2, "Jij", fontsize=12)
-
-    ax.set_xlabel("Actief")
-    ax.set_ylabel("Gemotiveerd")
-    st.pyplot(fig)
-
-    # Thema-analyse
-    st.subheader("📚 Thema-overzicht")
-    themas = df.groupby("thema")["antwoord"].mean().sort_values(ascending=False)
-    for thema, score in themas.items():
-        st.markdown(f"**{thema}**: {round(score, 1)} / 5")
+if st.session_state.q_index < total_questions:
+    with st.container():
+        st.markdown(f"### Vraag {st.session_state.q_index + 1} van {total_questions}")
+        question = df.iloc[st.session_state.q_index]
+        st.markdown(f"**{int(question['# vraag'])}. {question['vraag']}**")
+        st.markdown(f"**Thema:** {question['thema']}")
+        
+        options = [
+            "Helemaal niet mee eens",
+            "Mee oneens",
+            "Neutraal",
+            "Mee eens",
+            "Helemaal mee eens"
+        ]
+        antwoord = st.radio("Selecteer jouw mening:", options, horizontal=True, key=f"vraag_{st.session_state.q_index}")
+        
+        if st.button("Volgende", key="volgende_btn"):
+            st.session_state.answers.append(antwoord)
+            st.session_state.q_index += 1
+            st.experimental_rerun()
+else:
+    st.success("Je hebt alle vragen beantwoord!")
+    st.markdown("### Jouw antwoorden:")
+    for i, ans in enumerate(st.session_state.answers):
+        st.markdown(f"**Vraag {i+1}:** {ans}")
+    
+    if st.button("Opnieuw beginnen", key="opnieuw_btn"):
+        st.session_state.q_index = 0
+        st.session_state.answers = []
+        st.experimental_rerun()
