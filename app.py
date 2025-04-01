@@ -1,10 +1,11 @@
-
 import streamlit as st
 import pandas as pd
 from PIL import Image
 
+# Pagina-instellingen
 st.set_page_config(page_title="FitKompas", layout="wide")
 
+# Custom CSS voor styling
 st.markdown("""
 <style>
 body {
@@ -52,11 +53,14 @@ div[data-baseweb="radio"] > div > label {
 </style>
 """, unsafe_allow_html=True)
 
+# Header
 st.markdown('<div class="header"><h1>FitKompas Vragenlijst</h1><p>Ontdek jouw fitheid en motivatie</p></div>', unsafe_allow_html=True)
 
+# Logo tonen
 logo = Image.open("logo.png")
 st.image(logo, width=150)
 
+# Data inladen
 @st.cache_data
 def load_data():
     df = pd.read_excel("vragenlijst.xlsx")
@@ -76,11 +80,13 @@ def load_data():
 df = load_data()
 total_questions = len(df)
 
+# Session state initialiseren
 if 'q_index' not in st.session_state:
     st.session_state.q_index = 0
 if 'answers' not in st.session_state:
     st.session_state.answers = []
 
+# Vraag per keer tonen
 if st.session_state.q_index < total_questions:
     with st.container():
         st.markdown(f"### Vraag {st.session_state.q_index + 1} van {total_questions}")
@@ -101,9 +107,9 @@ if st.session_state.q_index < total_questions:
             st.session_state.answers.append(antwoord)
             st.session_state.q_index += 1
             try:
-            st.experimental_rerun()
-        except Exception:
-            st.warning('Herlaad de pagina handmatig (F5 of refresh).')
+                st.experimental_rerun()
+            except Exception:
+                st.warning("Herlaad de pagina handmatig (F5 of refresh).")
 else:
     st.success("Je hebt alle vragen beantwoord!")
     st.markdown("### Jouw antwoorden:")
@@ -116,4 +122,4 @@ else:
         try:
             st.experimental_rerun()
         except Exception:
-            st.warning('Herlaad de pagina handmatig (F5 of refresh).')
+            st.warning("Herlaad de pagina handmatig (F5 of refresh).")
