@@ -5,7 +5,7 @@ from PIL import Image
 # Pagina-instellingen
 st.set_page_config(page_title="FitKompas", layout="wide")
 
-# Custom CSS voor styling
+# Custom CSS voor modern design
 st.markdown("""
 <style>
 body {
@@ -56,7 +56,7 @@ div[data-baseweb="radio"] > div > label {
 # Header
 st.markdown('<div class="header"><h1>FitKompas Vragenlijst</h1><p>Ontdek jouw fitheid en motivatie</p></div>', unsafe_allow_html=True)
 
-# Logo tonen
+# Logo
 logo = Image.open("logo.png")
 st.image(logo, width=150)
 
@@ -86,14 +86,14 @@ if 'q_index' not in st.session_state:
 if 'answers' not in st.session_state:
     st.session_state.answers = []
 
-# Vraag per keer tonen
+# Vraag per keer
 if st.session_state.q_index < total_questions:
     with st.container():
         st.markdown(f"### Vraag {st.session_state.q_index + 1} van {total_questions}")
         question = df.iloc[st.session_state.q_index]
         st.markdown(f"**{int(question['# vraag'])}. {question['vraag']}**")
         st.markdown(f"**Thema:** {question['thema']}")
-        
+
         options = [
             "Helemaal niet mee eens",
             "Mee oneens",
@@ -101,25 +101,20 @@ if st.session_state.q_index < total_questions:
             "Mee eens",
             "Helemaal mee eens"
         ]
+
         antwoord = st.radio("Selecteer jouw mening:", options, horizontal=True, key=f"vraag_{st.session_state.q_index}")
-        
-        if st.button("Volgende", key="volgende_btn"):
-            st.session_state.answers.append(antwoord)
+
+        if st.button("Volgende", key=f"volgende_btn_{st.session_state.q_index}"):
+            if len(st.session_state.answers) == st.session_state.q_index:
+                st.session_state.answers.append(antwoord)
             st.session_state.q_index += 1
-            try:
-                st.experimental_rerun()
-            except Exception:
-                st.warning("Herlaad de pagina handmatig (F5 of refresh).")
+
 else:
     st.success("Je hebt alle vragen beantwoord!")
     st.markdown("### Jouw antwoorden:")
     for i, ans in enumerate(st.session_state.answers):
         st.markdown(f"**Vraag {i+1}:** {ans}")
-    
+
     if st.button("Opnieuw beginnen", key="opnieuw_btn"):
         st.session_state.q_index = 0
         st.session_state.answers = []
-        try:
-            st.experimental_rerun()
-        except Exception:
-            st.warning("Herlaad de pagina handmatig (F5 of refresh).")
