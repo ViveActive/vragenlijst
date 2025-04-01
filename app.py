@@ -100,7 +100,10 @@ if st.session_state.q_index < total_questions:
         if st.button("Volgende", key="volgende_btn"):
             st.session_state.answers.append(antwoord)
             st.session_state.q_index += 1
+            try:
             st.experimental_rerun()
+        except Exception:
+            st.warning('Herlaad de pagina handmatig (F5 of refresh).')
 else:
     st.success("Je hebt alle vragen beantwoord!")
     st.markdown("### Jouw antwoorden:")
@@ -110,4 +113,7 @@ else:
     if st.button("Opnieuw beginnen", key="opnieuw_btn"):
         st.session_state.q_index = 0
         st.session_state.answers = []
-        st.experimental_rerun()
+        try:
+            st.experimental_rerun()
+        except Exception:
+            st.warning('Herlaad de pagina handmatig (F5 of refresh).')
